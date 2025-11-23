@@ -173,7 +173,7 @@ function calculateOptimalProduction() {
     let bestTotalIngredients = Infinity;
 
     // Nombre d'itérations pour la recherche aléatoire
-    const maxIterations = 10000;
+    const maxIterations = 100000;
     let iterations = 0;
 
     while (iterations < maxIterations) {
@@ -261,3 +261,4 @@ function calculateOptimalProduction() {
 // Initialisation
 displayStocks();
 displayRecipes();
+
