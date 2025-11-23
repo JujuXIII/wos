@@ -1,0 +1,45 @@
+
+PROMPT 1
+--------
+ecris moi une fonction en python qui permet de maximiser le nombre de plat qu'il est possible de faire sachant que:
+
+* pour le plat dinde_roti il faut  2 * dinde + beurre + assaisonement
+* pour le plat pain_mais il faut 2 * mais + oeuf + farine
+* pour le plat tarte_citrouille il faut 2 * citrouille + lait + farine
+* pour le plat casserole_haricots il faut 2 * haricots + beurre + eau
+* pour le plat puree il faut 2 * patate + lait + oeuf
+* pour le plat sauce il faut 2  * canneberge + assaisonement + eau
+
+et que j'ai cette liste d'ingredients:
+
+* dinde = 7
+* patate = 21
+* citrouille  = 8
+* mais = 13
+* haricots = 4
+* canneberge = 7
+* beurre = 9
+* assaisonement = 10
+* eau = 11
+* lait = 5
+* oeuf = 19
+* farine = 3
+
+
+PROMPT 2
+--------
+optimise le code pour calculer le meilleurs prix de vente sachant que 
+* dinde_roti rapporte 40
+* pain_mais rapporte 40
+* tarte_citrouille rapporte 50
+* casserole_haricots rapporte 40
+* puree rapporte 40
+* sauce rapporte 50
+
+PROMPT 3
+--------
+peux tu m'en faire un site web ou le stock, les recettes et les prix sont modifiable
+
+PROMPT 4
+--------
+fourni moi un version html + js sans react

@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Optimiseur de plats (HTML + JS)</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#fff;--muted:#666;--accent:#2563eb}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);color:#111}
+    .wrap{max-width:1100px;margin:28px auto;padding:20px}
+    .grid{display:grid;gap:16px}
+    .cols-3{grid-template-columns:1fr 1fr 1fr}
+    .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 4px 18px rgba(15,23,42,0.06)}
+    h1{margin:0 0 8px;font-size:20px}
+    h2{margin:0 0 8px;font-size:15px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="text"], input[type="number"], textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    button{cursor:pointer;border:0;padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff}
+    .btn-ghost{background:transparent;color:var(--accent);border:1px solid rgba(37,99,235,0.12)}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .small{font-size:13px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .result{margin-top:12px;padding:10px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #eef4ff}
+    .kbd{background:#f3f4f6;padding:4px 6px;border-radius:6px;font-family:monospace;font-size:12px}
+    .danger{background:#fff0f0;color:#9b1c1c;border:1px solid #ffdede;padding:6px;border-radius:6px}
+    .two-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    @media (max-width:900px){.cols-3{grid-template-columns:1fr}.two-cols{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Optimiseur de plats — HTML + JS</h1>
+    <p class="small">Modifie le stock, les recettes et les prix, puis clique <strong>Calculer</strong> pour obtenir la répartition optimale et le revenu maximal.</p>
+
+    <div class="grid cols-3" style="margin-top:16px;">
+      <!-- STOCK -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h2>Stock</h2>
+          <div>
+            <button id="add-ingredient" class="btn-ghost">+ ingrédient</button>
+          </div>
+        </div>
+        <div id="stock-list" class="list" style="margin-top:8px"></div>
+        <small class="small">Valeurs entières ≥ 0</small>
+      </div>
+
+      <!-- RECETTES -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <h2>Recettes</h2>
+          <div>
+            <button id="add-recipe" class="btn-ghost">+ recette</button>
+          </div>
+        </div>
+        <div id="recipe-list" class="list" style="margin-top:8px"></div>
+        <small class="small">Édite ingrédients comme : <span class="kbd">dinde:2, beurre:1</span></small>
+      </div>
+
+      <!-- ACTIONS & PRIX -->
+      <div class="card">
+        <h2>Calcul & prix</h2>
+        <div id="price-list" class="list" style="margin-bottom:12px"></div>
+
+        <div class="controls" style="margin-top:6px">
+          <button id="compute">Calculer le meilleur revenu</button>
+          <button id="reset" class="btn-ghost">Réinitialiser valeurs</button>
+          <button id="export" class="btn-ghost">Exporter JSON</button>
+        </div>
+
+        <div id="info" class="result" style="margin-top:12px">
+          <div><strong>Astuce :</strong> ajoute/édite puis clique <em>Calculer</em>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="output" style="margin-top:18px"></div>
+  </div>
+
+<script>
+/* ====== Données initiales ====== */
+const DEFAULT = {
+  stock: {
+    dinde: 7,
+    patate: 21,
+    citrouille: 8,
+    mais: 13,
+    haricots: 4,
+    canneberge: 7,
+    beurre: 9,
+    assaisonement: 10,
+    eau: 11,
+    lait: 5,
+    oeuf: 19,
+    farine: 3
+  },
+  recipes: {
+    dinde_roti: { dinde: 2, beurre: 1, assaisonement: 1 },
+    pain_mais: { mais: 2, oeuf: 1, farine: 1 },
+    tarte_citrouille: { citrouille: 2, lait: 1, farine: 1 },
+    casserole_haricots: { haricots: 2, beurre: 1, eau: 1 },
+    puree: { patate: 2, lait: 1, oeuf: 1 },
+    sauce: { canneberge: 2, assaisonement: 1, eau: 1 }
+  },
+  prices: {
+    dinde_roti: 40,
+    pain_mais: 40,
+    tarte_citrouille: 50,
+    casserole_haricots: 40,
+    puree: 40,
+    sauce: 50
+  }
+};
+
+/* état courant */
+let STATE = JSON.parse(JSON.stringify(DEFAULT));
+
+/* ====== helpers DOM ====== */
+const el = id => document.getElementById(id);
+
+function renderAll() {
+  renderStock();
+  renderRecipes();
+  renderPrices();
+  renderOutput(null);
+}
+
+function renderStock(){
+  const container = el('stock-list');
+  container.innerHTML = '';
+  const keys = Object.keys(STATE.stock);
+  if (keys.length === 0) {
+    container.innerHTML = '<div class="small muted">Aucun ingrédient</div>';
+    return;
+  }
+  keys.forEach(k => {
+    const v = STATE.stock[k];
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <div style="display:flex;flex-direction:column">
+        <div style="font-weight:600">${k}</div>
+        <div class="small muted">nom: ${k}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input data-key="${k}" class="stock-input" type="number" min="0" value="${v}" style="width:84px"/>
+        <button data-key="${k}" class="del-ing btn-ghost">suppr</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+
+  // bind inputs
+  container.querySelectorAll('.stock-input').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const k = e.target.dataset.key;
+      let val = parseInt(e.target.value,10);
+      if (isNaN(val) || val < 0) val = 0;
+      STATE.stock[k] = val;
+      renderAll();
+    });
+  });
+  container.querySelectorAll('.del-ing').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const k = e.target.dataset.key;
+      if (!confirm('Supprimer ' + k + ' du stock ?')) return;
+      delete STATE.stock[k];
+      // also remove from recipes where not present is ok
+      renderAll();
+    });
+  });
+}
+
+function renderRecipes(){
+  const container = el('recipe-list');
+  container.innerHTML = '';
+  const keys = Object.keys(STATE.recipes);
+  if (keys.length === 0){
+    container.innerHTML = '<div class="small muted">Aucune recette</div>';
+    return;
+  }
+  keys.forEach(name => {
+    const ing = STATE.recipes[name];
+    const line = document.createElement('div');
+    line.className = 'row';
+    line.innerHTML = `
+      <div style="flex:1">
+        <div style="font-weight:600">${name.replaceAll('_',' ')}</div>
+        <div class="small muted">${formatIng(ing)}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button data-name="${name}" class="edit-rec btn-ghost">éditer ingr.</button>
+        <button data-name="${name}" class="del-rec danger">suppr</button>
+      </div>
+    `;
+    container.appendChild(line);
+  });
+
+  container.querySelectorAll('.edit-rec').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const name = e.target.dataset.name;
+      const current = formatIng(STATE.recipes[name]);
+      const txt = prompt(`Édite les ingrédients pour "${name}" au format ing:qty, ing2:qty2`, current);
+      if (txt === null) return;
+      const parsed = parseIngString(txt);
+      STATE.recipes[name] = parsed;
+      renderAll();
+    });
+  });
+
+  container.querySelectorAll('.del-rec').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const name = e.target.dataset.name;
+      if (!confirm('Supprimer la recette "'+name+'"?')) return;
+      delete STATE.recipes[name];
+      delete STATE.prices[name];
+      renderAll();
+    });
+  });
+}
+
+function renderPrices(){
+  const container = el('price-list');
+  container.innerHTML = '';
+  const keys = Object.keys(STATE.recipes);
+  if (keys.length === 0){
+    container.innerHTML = '<div class="small muted">Aucune recette</div>';
+    return;
+  }
+  keys.forEach(name => {
+    const p = STATE.prices[name] ?? 0;
+    const row = document.createElement('div');
+    row.className = 'two-cols';
+    row.innerHTML = `
+      <div style="display:flex;flex-direction:column">
+        <div style="font-weight:600">${name.replaceAll('_',' ')}</div>
+        <div class="small muted">${formatIng(STATE.recipes[name])}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input data-name="${name}" class="price-input" type="number" min="0" value="${p}" style="width:84px"/>
+        <button data-name="${name}" class="btn-ghost edit-name">renommer</button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+
+  container.querySelectorAll('.price-input').forEach(inp=>{
+    inp.addEventListener('change', e=>{
+      const name = e.target.dataset.name;
+      let val = parseInt(e.target.value,10);
+      if (isNaN(val) || val < 0) val = 0;
+      STATE.prices[name] = val;
+      renderAll();
+    });
+  });
+
+  container.querySelectorAll('.edit-name').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const name = e.target.dataset.name;
+      const newName = prompt('Nouveau nom pour la recette (conserver sans espaces préférablement):', name);
+      if (!newName || newName.trim() === '') return;
+      if (STATE.recipes[newName]) { alert('Une recette porte déjà ce nom'); return; }
+      STATE.recipes[newName] = STATE.recipes[name];
+      STATE.prices[newName] = STATE.prices[name];
+      delete STATE.recipes[name];
+      delete STATE.prices[name];
+      renderAll();
+    });
+  });
+}
+
+function formatIng(map){
+  if (!map || Object.keys(map).length === 0) return '<em>aucun</em>';
+  return Object.entries(map).map(([k,v])=>`${k}:${v}`).join(', ');
+}
+
+function parseIngString(s){
+  const out = {};
+  if (!s) return out;
+  s.split(/[,;]+/).map(p => p.trim()).filter(Boolean).forEach(part=>{
+    const [k, qty] = part.split(':').map(x => x && x.trim());
+    if (!k) return;
+    let q = parseInt(qty,10);
+    if (isNaN(q) || q < 0) q = 0;
+    out[k] = q;
+  });
+  return out;
+}
+
+/* ====== UI buttons ====== */
+el('add-ingredient').addEventListener('click', ()=>{
+  const name = prompt('Nom du nouvel ingrédient (ex: miel) :');
+  if (!name) return;
+  if (STATE.stock[name]) { alert('Ingrédient déjà présent'); return; }
+  STATE.stock[name] = 0;
+  renderAll();
+});
+
+el('add-recipe').addEventListener('click', ()=>{
+  const name = prompt('Nom de la recette (ex: biscuit) :');
+  if (!name) return;
+  if (STATE.recipes[name]) { alert('Recette déjà présente'); return; }
+  STATE.recipes[name] = {};
+  STATE.prices[name] = 0;
+  renderAll();
+});
+
+el('reset').addEventListener('click', ()=>{
+  if (!confirm('Réinitialiser toutes les données aux valeurs par défaut ?')) return;
+  STATE = JSON.parse(JSON.stringify(DEFAULT));
+  renderAll();
+});
+
+el('export').addEventListener('click', ()=>{
+  const data = JSON.stringify(STATE, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'optimiseur_plats_state.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ====== Solver: branch & bound (JS) ====== */
+function computeOptimal(state) {
+  // clone
+  const stock = {...state.stock};
+  const recipes = Object.entries(state.recipes).map(([name, ing]) => ({name, ing}));
+  const price = {...state.prices};
+
+  // compute per-recipe max possible given initial stock
+  const maxPossible = {};
+  recipes.forEach(r => {
+    const ing = r.ing;
+    if (!ing || Object.keys(ing).length === 0) { maxPossible[r.name] = 0; return; }
+    let best = Infinity;
+    for (const [k, q] of Object.entries(ing)) {
+      const have = stock[k] || 0;
+      best = Math.min(best, Math.floor(have / q));
+    }
+    if (best === Infinity) best = 0;
+    maxPossible[r.name] = best;
+  });
+
+  // order recipes by price descending to help pruning
+  const ordered = [...recipes].sort((a,b)=> (price[b.name]||0) - (price[a.name]||0));
+  const orderedMaxRev = ordered.map(r => (price[r.name]||0) * (maxPossible[r.name] || 0));
+
+  let bestRevenue = 0;
+  let bestCombo = {};
+
+  function dfs(i, curStock, revenue, combo) {
+    // optimistic remaining
+    const optimisticRemaining = orderedMaxRev.slice(i).reduce((a,b)=>a+b,0);
+    if (revenue + optimisticRemaining <= bestRevenue) return;
+
+    if (i === ordered.length) {
+      if (revenue > bestRevenue) {
+        bestRevenue = revenue;
+        bestCombo = {...combo};
+      }
+      return;
+    }
+
+    const r = ordered[i];
+    const name = r.name;
+    const recIng = r.ing;
+    const p = price[name] || 0;
+
+    // compute max feasible now with curStock
+    let maxN = Infinity;
+    if (!recIng || Object.keys(recIng).length === 0) maxN = 0;
+    else {
+      for (const [k,q] of Object.entries(recIng)) {
+        const have = curStock[k] || 0;
+        maxN = Math.min(maxN, Math.floor(have / q));
+      }
+    }
+    if (maxN === Infinity) maxN = 0;
+
+    for (let n = maxN; n >= 0; n--) {
+      // apply n
+      const nextStock = {...curStock};
+      let ok = true;
+      for (const [k,q] of Object.entries(recIng || {})) {
+        nextStock[k] = (nextStock[k] || 0) - q*n;
+        if (nextStock[k] < 0) { ok = false; break; }
+      }
+      if (!ok) continue;
+      combo[name] = n;
+      dfs(i+1, nextStock, revenue + n*p, combo);
+      // no explicit cleanup necessary because we'll overwrite combo[name] later
+    }
+  }
+
+  dfs(0, {...stock}, 0, {});
+  return { revenue: bestRevenue, combo: bestCombo };
+}
+
+/* ====== Compute button ====== */
+el('compute').addEventListener('click', ()=>{
+  const out = el('output');
+  out.innerHTML = '<div class="card"><div class="small">Calcul en cours…</div></div>';
+  // run compute
+  setTimeout(()=>{
+    try {
+      const res = computeOptimal(STATE);
+      renderOutput(res);
+    } catch(err) {
+      out.innerHTML = `<div class="card danger">Erreur lors du calcul: ${err.message}</div>`;
+    }
+  }, 30);
+});
+
+function renderOutput(result) {
+  const container = el('output');
+  if (!result) {
+    container.innerHTML = '';
+    return;
+  }
+  const recipes = Object.keys(STATE.recipes);
+  const lines = recipes.map(r=>{
+    const qty = result.combo[r] ?? 0;
+    return `<div style="display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;background:#fff;margin-bottom:6px">
+              <div style="font-weight:600">${r.replaceAll('_',' ')}</div>
+              <div style="font-weight:700">${qty}</div>
+            </div>`;
+  }).join('');
+  container.innerHTML = `
+    <div class="card">
+      <h2>Résultat</h2>
+      <div class="result" style="margin-top:8px">
+        <div style="font-size:18px;margin-bottom:8px">Revenu maximal : <strong>${result.revenue} €</strong></div>
+        <div class="small muted">Répartition optimale :</div>
+        <div style="margin-top:8px">${lines || '<div class="small muted">Aucune recette</div>'}</div>
+      </div>
+    </div>
+  `;
+}
+
+/* ====== init ====== */
+renderAll();
+
+</script>
+</body>
+</html>
