@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimisation de production de plats</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Optimisation de production de plats</h1>
+
+    <h2>1. Stocks d'ingrédients</h2>
+    <div class="form-group">
+        <input type="text" id="newIngredientName" placeholder="Nom de l'ingrédient">
+        <input type="number" id="newIngredientQuantity" placeholder="Quantité" value="0">
+        <button onclick="addIngredient()">Ajouter un ingrédient</button>
+    </div>
+    <table id="stocksTable">
+        <thead>
+            <tr>
+                <th>Ingrédient</th>
+                <th>Quantité</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Les stocks seront remplis par JavaScript -->
+        </tbody>
+    </table>
+
+    <h2>2. Recettes des plats</h2>
+    <div class="form-group">
+        <input type="text" id="newDishName" placeholder="Nom du plat">
+        <input type="text" id="newDishIngredients" placeholder="Ex: dinde:2,beurre:1">
+        <input type="number" id="newDishPrice" placeholder="Prix de vente" value="0">
+        <button onclick="addDish()">Ajouter un plat</button>
+    </div>
+    <table id="recipesTable">
+        <thead>
+            <tr>
+                <th>Plat</th>
+                <th>Recette</th>
+                <th>Prix de vente</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Les recettes seront remplies par JavaScript -->
+        </tbody>
+    </table>
+
+    <h2>3. Objectif</h2>
+    <label for="targetRevenue">Revenu cible :</label>
+    <input type="number" id="targetRevenue" value="2500">
+    <label for="stopAtTarget">
+        <input type="checkbox" id="stopAtTarget">
+        S'arrêter au revenu cible (minimiser les ingrédients utilisés)
+    </label>
+    <button onclick="calculateOptimalProduction()">Calculer</button>
+
+    <h2>4. Résultats</h2>
+    <div id="result" class="result">
+        <!-- Les résultats seront affichés ici -->
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
