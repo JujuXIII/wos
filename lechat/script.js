@@ -1,26 +1,26 @@
 // Données initiales
 let stocks = {
-    dinde: 7,
-    patate: 21,
-    citrouille: 8,
-    mais: 13,
-    haricots: 4,
-    canneberge: 7,
-    beurre: 9,
-    assaisonement: 10,
-    eau: 11,
-    lait: 5,
-    oeuf: 19,
-    farine: 3,
+    chocolat: 29,
+    oeuf: 25,
+    farine: 26,
+    cotelette: 34,
+    poivre: 29,
+    beurre: 29,
+    poisson: 31,
+	sel: 37,
+    champignon: 34,
+    fromage: 27,
+    tomate: 33,
+	poulet: 50
 };
 
 let recipes = {
-    dinde_roti: { ingredients: { dinde: 2, beurre: 1, assaisonement: 1 }, price: 40 },
-    pain_mais: { ingredients: { mais: 2, oeuf: 1, farine: 1 }, price: 40 },
-    tarte_citrouille: { ingredients: { citrouille: 2, lait: 1, farine: 1 }, price: 50 },
-    casserole_haricots: { ingredients: { haricots: 2, beurre: 1, eau: 1 }, price: 40 },
-    puree: { ingredients: { patate: 2, lait: 1, oeuf: 1 }, price: 40 },
-    sauce: { ingredients: { canneberge: 2, assaisonement: 1, eau: 1 }, price: 50 },
+    cotelettes_roties: { ingredients: { cotelette: 2, poivre: 1, beurre: 1 }, price: 50 },
+    palais_gateau: { ingredients: { chocolat: 2, oeuf: 1, farine: 1 }, price: 40 },
+    wrap: { ingredients: { champignon: 2, fromage: 1, farine: 1 }, price: 40 },
+    tomate_four: { ingredients: { tomate: 2, oeuf: 1, fromage: 1 }, price: 40 },
+    cabillaud_poele: { ingredients: { poisson: 2, beurre: 1, sel: 1 }, price: 50 },
+    brochettes_poulet: { ingredients: { poulet: 2, poivre: 1, sel: 1 }, price: 40 },
 };
 
 // Fonction pour afficher les stocks
