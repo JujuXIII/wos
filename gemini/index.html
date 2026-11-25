@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimiseur de Recettes Personnalisable</title>
+    <style>
+        :root {
+            --primary: #d97706;
+            --primary-hover: #b45309;
+            --bg: #fdfbf7;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); max-width: 1200px; margin: 0 auto; padding: 20px; line-height: 1.4; }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 5px; }
+        .save-indicator { text-align: center; font-size: 0.85rem; color: #059669; margin-bottom: 20px; height: 20px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 1.35fr; gap: 20px; }
+        @media (max-width: 900px) { .grid-container { grid-template-columns: 1fr; } }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card h2 { margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 10px; font-size: 1.25rem; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+        .recipe-card-row { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
+        .recipe-top, .recipe-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+        input[type="text"] { padding: 5px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; font-weight: 600; color: var(--text); flex: 1; min-width: 120px; }
+        input[type="text"]:focus, select:focus, input[type="number"]:focus { outline: none; border-color: var(--primary); }
+        select { padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.85rem; background: #f9fafb; max-width: 125px; }
+        .ing-group { display: flex; align-items: center; gap: 4px; font-size: 0.85rem; color: #4b5563; }
+        .qty-control { display: flex; align-items: center; gap: 4px; }
+        .qty-control input[type="number"] { width: 65px; padding: 5px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; text-align: center; }
+        .btn-step { background: #e5e7eb; color: #1f2937; border: none; width: 28px; height: 30px; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .btn-step:hover { background: #d1d5db; }
+        .action-panel { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; background: #fef3c7; border-color: #fcd34d; }
+        .target-group { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 1.1rem; }
+        .target-group input { width: 110px; font-weight: bold; padding: 6px; border-radius: 6px; border: 1px solid #d1d5db; text-align: right; }
+        .btn-main { background-color: var(--primary); color: white; border: none; padding: 12px 24px; font-size: 1.05rem; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        .btn-main:hover { background-color: var(--primary-hover); }
+        .btn-deduct { background-color: #059669; color: white; border: none; padding: 10px 18px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+        .btn-deduct:hover { background-color: #047857; }
+        .btn-deduct:disabled { background-color: #9ca3af; cursor: not-allowed; }
+        #result-panel { margin-top: 20px; display: none; }
+        .success-box { background-color: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 20px; border-radius: 10px; }
+        .error-box { background-color: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 20px; border-radius: 10px; }
+        .result-list { list-style: none; padding: 0; margin: 15px 0; }
+        .result-list li { padding: 6px 0; font-size: 1.05rem; border-bottom: 1px dashed #a7f3d0; }
+        .summary-stats { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 15px; font-weight: bold; background: rgba(255,255,255,0.6); padding: 10px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+    <h1>🦃 Calculateur & Optimiseur de Recettes</h1>
+    <div id="save-status" class="save-indicator"></div>
+
+    <div class="grid-container">
+        <div class="card">
+            <h2>1. Ressources (Nom & Stock)</h2>
+            <div id="resources-container"></div>
+        </div>
+        <div class="card">
+            <h2>2. Recettes (Nom, Prix & 3 Ingrédients)</h2>
+            <div id="recipes-container"></div>
+        </div>
+    </div>
+
+    <div class="card action-panel">
+        <div class="target-group">
+            <label for="target-amount">Montant cible à atteindre :</label>
+            <input type="number" id="target-amount" min="1" value="100" oninput="saveData()">
+        </div>
+        <button class="btn-main" onclick="calculateOptimalRecipes()">Calculer les recettes optimales</button>
+    </div>
+
+    <div id="result-panel"></div>
+    <script>
+        const STORAGE_KEY = 'optimiseur_recettes_v2';
+        let lastUsedResources = null;
+
+        const defaultResources = [
+            { id: 'res_0', name: 'Dinde', qty: 10 },
+            { id: 'res_1', name: 'Patates', qty: 10 },
+            { id: 'res_2', name: 'Citrouille', qty: 10 },
+            { id: 'res_3', name: 'Maïs', qty: 10 },
+            { id: 'res_4', name: 'Haricots', qty: 10 },
+            { id: 'res_5', name: 'Canneberges', qty: 10 },
+            { id: 'res_6', name: 'Beurre', qty: 10 },
+            { id: 'res_7', name: 'Assaisonnements', qty: 10 },
+            { id: 'res_8', name: 'Eau', qty: 10 },
+            { id: 'res_9', name: 'Lait', qty: 10 },
+            { id: 'res_10', name: 'Oeuf', qty: 10 },
+            { id: 'res_11', name: 'Farine', qty: 10 }
+        ];
+
+        const defaultRecipes = [
+            { id: 'rec_0', name: 'Dinde rôtie', price: 50, ing1: 'res_0', ing2: 'res_6', ing3: 'res_7' },
+            { id: 'rec_1', name: 'Pain de maïs', price: 25, ing1: 'res_3', ing2: 'res_10', ing3: 'res_11' },
+            { id: 'rec_2', name: 'Tarte citrouille', price: 35, ing1: 'res_2', ing2: 'res_9', ing3: 'res_11' },
+            { id: 'rec_3', name: "Casserole d'haricots", price: 30, ing1: 'res_4', ing2: 'res_6', ing3: 'res_8' },
+            { id: 'rec_4', name: 'Purée', price: 20, ing1: 'res_1', ing2: 'res_9', ing3: 'res_10' },
+            { id: 'rec_5', name: 'Sauce', price: 15, ing1: 'res_5', ing2: 'res_7', ing3: 'res_8' }
+        ];
+
+        let state = { resources: [], recipes: [], target: 100 };
+
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                state = JSON.parse(saved);
+            } else {
+                state = {
+                    resources: JSON.parse(JSON.stringify(defaultResources)),
+                    recipes: JSON.parse(JSON.stringify(defaultRecipes)),
+                    target: 100
+                };
+            }
+        }
+
+        function saveData() {
+            state.target = parseFloat(document.getElementById('target-amount').value) || 0;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            const status = document.getElementById('save-status');
+            status.textContent = '💾 Sauvegardé automatiquement';
+            clearTimeout(window.saveTimeout);
+            window.saveTimeout = setTimeout(() => { status.textContent = ''; }, 2000);
+        }
+
+        function updateResourceName(index, newName) {
+            state.resources[index].name = newName;
+            saveData();
+            renderRecipes(); // Met à jour les menus déroulants des recettes en direct
+        }
+
+        function changeResourceQty(index, delta, exactVal = null) {
+            let val = exactVal !== null ? (parseInt(exactVal) || 0) : (state.resources[index].qty + delta);
+            val = Math.max(0, val);
+            state.resources[index].qty = val;
+            document.getElementById(`res-qty-${index}`).value = val;
+            saveData();
+        }
+
+        function changeRecipePrice(index, delta, exactVal = null) {
+            let val = exactVal !== null ? (parseFloat(exactVal) || 0) : (state.recipes[index].price + delta);
+            val = Math.max(0, val);
+            state.recipes[index].price = val;
+            document.getElementById(`rec-price-${index}`).value = val;
+            saveData();
+        }
+
+        function updateRecipeField(index, field, value) {
+            state.recipes[index][field] = value;
+            saveData();
+        }
+
+        function renderResources() {
+            const container = document.getElementById('resources-container');
+            container.innerHTML = state.resources.map((res, idx) => `
+                <div class="item-row">
+                    <input type="text" value="${res.name}" oninput="updateResourceName(${idx}, this.value)" placeholder="Nom ressource">
+                    <div class="qty-control">
+                        <button class="btn-step" onclick="changeResourceQty(${idx}, -1)">-</button>
+                        <input type="number" id="res-qty-${idx}" min="0" value="${res.qty}" oninput="changeResourceQty(${idx}, 0, this.value)">
+                        <button class="btn-step" onclick="changeResourceQty(${idx}, 1)">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function buildOptions(selectedId) {
+            return state.resources.map(r => 
+                `<option value="${r.id}" ${r.id === selectedId ? 'selected' : ''}>${r.name || 'Sans nom'}</option>`
+            ).join('');
+        }
+
+        function renderRecipes() {
+            const container = document.getElementById('recipes-container');
+            container.innerHTML = state.recipes.map((rec, idx) => `
+                <div class="recipe-card-row">
+                    <div class="recipe-top">
+                        <input type="text" value="${rec.name}" oninput="updateRecipeField(${idx}, 'name', this.value)" placeholder="Nom recette">
+                        <div class="qty-control">
+                            <span style="font-size:0.85rem; color:#6b7280;">Prix:</span>
+                            <button class="btn-step" onclick="changeRecipePrice(${idx}, -1)">-</button>
+                            <input type="number" id="rec-price-${idx}" min="0" value="${rec.price}" oninput="changeRecipePrice(${idx}, 0, this.value)">
+                            <button class="btn-step" onclick="changeRecipePrice(${idx}, 1)">+</button>
+                        </div>
+                    </div>
+                    <div class="recipe-bottom">
+                        <div class="ing-group"><strong>2x</strong> <select onchange="updateRecipeField(${idx}, 'ing1', this.value)">${buildOptions(rec.ing1)}</select></div>
+                        <div class="ing-group"><strong>1x</strong> <select onchange="updateRecipeField(${idx}, 'ing2', this.value)">${buildOptions(rec.ing2)}</select></div>
+                        <div class="ing-group"><strong>1x</strong> <select onchange="updateRecipeField(${idx}, 'ing3', this.value)">${buildOptions(rec.ing3)}</select></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function deductResources(optionType) {
+            const resourcesToDeduct = optionType === 'eco' ? window.ecoUsedResources : window.maxUsedResources;
+            if (!resourcesToDeduct) return;
+
+            state.resources.forEach((res, idx) => {
+                if (resourcesToDeduct[res.id]) {
+                    res.qty = Math.max(0, res.qty - resourcesToDeduct[res.id]);
+                    document.getElementById(`res-qty-${idx}`).value = res.qty;
+                }
+            });
+            saveData();
+
+            const btn = document.getElementById(`btn-deduct-${optionType}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = '✔️ Ressources déduites du stock';
+            }
+            const otherBtn = document.getElementById(`btn-deduct-${optionType === 'eco' ? 'max' : 'eco'}`);
+            if (otherBtn) otherBtn.disabled = true;
+        }
+
+        function buildResultCard(title, subtitle, counts, activeRecipes, revenue, cost, optionType, targetAmount) {
+            let listHTML = '<ul class="result-list">';
+            let usedSummary = {};
+
+            activeRecipes.forEach((rec, idx) => {
+                const qty = counts[idx];
+                if (qty > 0) {
+                    listHTML += `<li><strong>${qty}x ${rec.name || 'Recette sans nom'}</strong> (Gain : ${qty * rec.price})</li>`;
+                    for (const [ing, reqQty] of Object.entries(rec.ingredients)) {
+                        usedSummary[ing] = (usedSummary[ing] || 0) + (reqQty * qty);
+                    }
+                }
+            });
+            listHTML += '</ul>';
+
+            if (optionType === 'eco') window.ecoUsedResources = usedSummary;
+            else window.maxUsedResources = usedSummary;
+
+            const usedResText = Object.entries(usedSummary)
+                .map(([key, qty]) => {
+                    const resObj = state.resources.find(r => r.id === key);
+                    return `${qty} ${resObj ? resObj.name.toLowerCase() : key}`;
+                }).join(', ');
+
+            const targetBadge = targetAmount > 0 
+                ? (revenue >= targetAmount ? `<span style="color:#059669;">(Cible ${targetAmount} atteinte)</span>` : `<span style="color:#d97706;">(Cible ${targetAmount} non atteinte)</span>`)
+                : '';
+
+            return `
+                <div class="success-box" style="flex: 1; min-width: 300px; ${optionType === 'max' ? 'background-color:#eff6ff; border-color:#3b82f6; color:#1e3a8a;' : ''}">
+                    <h3 style="margin-top:0;">${title}</h3>
+                    <p style="font-size:0.9rem; margin-top:-5px;">${subtitle}</p>
+                    ${listHTML}
+                    <div class="summary-stats">
+                        <div>💰 Gain total : ${revenue} ${targetBadge}</div>
+                        <div>📦 Ressources : ${cost} unités</div>
+                    </div>
+                    <p style="font-size: 0.85rem; margin-top: 10px;"><strong>Ingrédients :</strong> ${usedResText}.</p>
+                    <button id="btn-deduct-${optionType}" class="btn-deduct" style="${optionType === 'max' ? 'background-color:#2563eb;' : ''}" onclick="deductResources('${optionType}')">
+                        Déduire ces ressources du stock
+                    </button>
+                </div>`;
+        }
+        function calculateOptimalRecipes() {
+            const targetAmount = parseFloat(document.getElementById('target-amount').value) || 0;
+            const resultPanel = document.getElementById('result-panel');
+            resultPanel.style.display = 'block';
+            window.ecoUsedResources = null;
+            window.maxUsedResources = null;
+
+            const initialStock = {};
+            state.resources.forEach(res => { initialStock[res.id] = res.qty; });
+
+            const activeRecipes = state.recipes.map(rec => {
+                const ingredients = {};
+                ingredients[rec.ing1] = (ingredients[rec.ing1] || 0) + 2;
+                ingredients[rec.ing2] = (ingredients[rec.ing2] || 0) + 1;
+                ingredients[rec.ing3] = (ingredients[rec.ing3] || 0) + 1;
+
+                const resourceCost = 4;
+                let maxCraftable = Infinity;
+                for (const [ing, reqQty] of Object.entries(ingredients)) {
+                    maxCraftable = Math.min(maxCraftable, Math.floor((initialStock[ing] || 0) / reqQty));
+                }
+                return { ...rec, ingredients, resourceCost, maxCraftable, ratio: rec.price / resourceCost };
+            }).filter(r => r.price > 0 && r.maxCraftable > 0);
+
+            if (activeRecipes.length === 0) {
+                resultPanel.innerHTML = `<div class="error-box"><strong>Aucune recette réalisable !</strong><br>Vérifiez vos stocks d'ingrédients ou les prix de vos recettes.</div>`;
+                return;
+            }
+
+            activeRecipes.sort((a, b) => b.ratio - a.ratio);
+
+            // 1. Recherche économie de ressources
+            let bestEcoCost = Infinity, bestEcoRev = 0, bestEcoCounts = null;
+            function searchEco(index, currentStock, currentCounts, currentRevenue, currentCost) {
+                if (targetAmount <= 0 || currentCost >= bestEcoCost) return;
+                if (currentRevenue >= targetAmount) {
+                    bestEcoCost = currentCost;
+                    bestEcoRev = currentRevenue;
+                    bestEcoCounts = [...currentCounts];
+                    return;
+                }
+                if (index >= activeRecipes.length) return;
+
+                const recipe = activeRecipes[index];
+                let maxPossible = Infinity;
+                for (const [ing, reqQty] of Object.entries(recipe.ingredients)) {
+                    maxPossible = Math.min(maxPossible, Math.floor(currentStock[ing] / reqQty));
+                }
+                const limit = Math.min(maxPossible, Math.ceil((targetAmount - currentRevenue) / recipe.price));
+
+                for (let count = limit; count >= 0; count--) {
+                    const nextStock = { ...currentStock };
+                    for (const [ing, reqQty] of Object.entries(recipe.ingredients)) nextStock[ing] -= reqQty * count;
+                    currentCounts[index] = count;
+                    searchEco(index + 1, nextStock, currentCounts, currentRevenue + (count * recipe.price), currentCost + (count * recipe.resourceCost));
+                }
+                currentCounts[index] = 0;
+            }
+
+            // 2. Recherche gain maximum
+            let bestMaxRev = 0, bestMaxCost = Infinity, bestMaxCounts = null;
+            function searchMax(index, currentStock, currentCounts, currentRevenue, currentCost) {
+                if (index >= activeRecipes.length) {
+                    if (currentRevenue > bestMaxRev || (currentRevenue === bestMaxRev && currentCost < bestMaxCost)) {
+                        bestMaxRev = currentRevenue;
+                        bestMaxCost = currentCost;
+                        bestMaxCounts = [...currentCounts];
+                    }
+                    return;
+                }
+
+                let remainingMaxPossibleRev = currentRevenue;
+                for (let i = index; i < activeRecipes.length; i++) {
+                    let maxP = Infinity;
+                    for (const [ing, reqQty] of Object.entries(activeRecipes[i].ingredients)) {
+                        maxP = Math.min(maxP, Math.floor(currentStock[ing] / reqQty));
+                    }
+                    remainingMaxPossibleRev += maxP * activeRecipes[i].price;
+                }
+                if (remainingMaxPossibleRev < bestMaxRev) return;
+
+                const recipe = activeRecipes[index];
+                let maxPossible = Infinity;
+                for (const [ing, reqQty] of Object.entries(recipe.ingredients)) {
+                    maxPossible = Math.min(maxPossible, Math.floor(currentStock[ing] / reqQty));
+                }
+
+                for (let count = maxPossible; count >= 0; count--) {
+                    const nextStock = { ...currentStock };
+                    for (const [ing, reqQty] of Object.entries(recipe.ingredients)) nextStock[ing] -= reqQty * count;
+                    currentCounts[index] = count;
+                    searchMax(index + 1, nextStock, currentCounts, currentRevenue + (count * recipe.price), currentCost + (count * recipe.resourceCost));
+                }
+                currentCounts[index] = 0;
+            }
+
+            searchEco(0, initialStock, new Array(activeRecipes.length).fill(0), 0, 0);
+            searchMax(0, initialStock, new Array(activeRecipes.length).fill(0), 0, 0);
+
+            let htmlOutput = '<div style="display: flex; flex-wrap: wrap; gap: 20px;">';
+
+            if (targetAmount <= 0) {
+                htmlOutput += `<div class="error-box" style="flex:1; min-width:300px;">Entrez un montant cible supérieur à 0 pour calculer l'option économique.</div>`;
+            } else if (!bestEcoCounts) {
+                htmlOutput += `<div class="error-box" style="flex:1; min-width:300px;"><strong>🎯 Cible (${targetAmount}) impossible à atteindre</strong><br>Vos ressources actuelles ne suffisent pas pour atteindre ce montant.</div>`;
+            } else {
+                htmlOutput += buildResultCard('🎯 1. Économie de ressources', 'Atteint la cible en dépensant le moins d\'ingrédients :', bestEcoCounts, activeRecipes, bestEcoRev, bestEcoCost, 'eco', targetAmount);
+            }
+
+            if (bestMaxCounts && bestMaxRev > 0) {
+                htmlOutput += buildResultCard('💰 2. Gain maximum possible', 'Utilise votre stock pour rapporter le plus d\'argent :', bestMaxCounts, activeRecipes, bestMaxRev, bestMaxCost, 'max', targetAmount);
+            }
+
+            htmlOutput += '</div>';
+            resultPanel.innerHTML = htmlOutput;
+        }
+
+        loadState();
+        document.getElementById('target-amount').value = state.target;
+        renderResources();
+        renderRecipes();
+    </script>
+</body>
+</html>
