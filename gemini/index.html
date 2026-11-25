@@ -91,7 +91,7 @@
         .result-list li { padding: 6px 0; font-size: 1rem; border-bottom: 1px dashed #a7f3d0; }
         .summary-stats { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; font-weight: bold; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; }
 
-        /* Passage des boutons et quantités SOUS le texte sur mobile */
+        /* Passage en colonne unique sur smartphone */
         @media (max-width: 768px) {
             .grid-container { grid-template-columns: 1fr; }
             .item-row, .recipe-top, .recipe-bottom {
@@ -107,6 +107,14 @@
             .target-group { flex-direction: column; align-items: stretch; }
             .target-group input { width: 100%; text-align: center; }
             .btn-main { width: 100%; }
+            
+            /* Empilement des 2 fenêtres de résultats l'une sous l'autre */
+            #result-panel > div {
+                flex-direction: column !important;
+            }
+            .success-box, .error-box {
+                width: 100%;
+            }
         }
     </style>
 </head>
