@@ -18,15 +18,14 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            max-width: 1200px;
+            max-width: 1100px;
             margin: 0 auto;
-            padding: 15px;
+            padding: 12px;
             line-height: 1.4;
         }
-        h1 { text-align: center; color: var(--primary); margin: 5px 0; font-size: 1.5rem; }
-        .save-indicator { text-align: center; font-size: 0.85rem; color: #059669; margin-bottom: 15px; height: 20px; }
+        h1 { text-align: center; color: var(--primary); margin: 5px 0; font-size: 1.4rem; }
+        .save-indicator { text-align: center; font-size: 0.85rem; color: #059669; margin-bottom: 12px; height: 20px; }
         
-        /* Grille adaptative PC / Mobile */
         .grid-container { display: grid; grid-template-columns: 1fr 1.35fr; gap: 16px; }
         .card {
             background: var(--card-bg);
@@ -34,31 +33,32 @@
             border-radius: 12px;
             padding: 16px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            min-width: 0;
         }
         .card h2 { margin-top: 0; border-bottom: 2px solid var(--bg); padding-bottom: 8px; font-size: 1.15rem; }
         
         /* Lignes Ressources & Recettes */
-        .item-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+        .item-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
         .recipe-card-row { display: flex; flex-direction: column; gap: 10px; padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
-        .recipe-top, .recipe-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .recipe-top, .recipe-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         
-        /* Champs de saisie (16px minimum pour éviter le zoom auto sur iOS) */
         input[type="text"], input[type="number"], select {
             font-size: 16px;
             border: 1px solid #d1d5db;
             border-radius: 8px;
             color: var(--text);
             background: #fff;
+            min-width: 0;
         }
-        input[type="text"] { padding: 8px 10px; font-weight: 600; flex: 1; min-width: 110px; }
+        input[type="text"] { padding: 8px 10px; font-weight: 600; flex: 1; width: 100%; }
         input[type="text"]:focus, select:focus, input[type="number"]:focus { outline: none; border-color: var(--primary); }
-        select { padding: 7px 8px; background: #f9fafb; flex: 1; min-width: 0; }
+        select { padding: 7px 8px; background: #f9fafb; flex: 1; width: 100%; }
         
-        .ing-group { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4b5563; flex: 1; min-width: 115px; }
+        .ing-group { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: #4b5563; flex: 1; min-width: 0; }
         
-        /* Contrôles tactiles + et - */
-        .qty-control { display: flex; align-items: center; gap: 5px; }
-        .qty-control input[type="number"] { width: 58px; padding: 6px 4px; text-align: center; font-weight: 600; }
+        /* Contrôles + et - */
+        .qty-control { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .qty-control input[type="number"] { width: 65px; padding: 6px 4px; text-align: center; font-weight: 600; }
         .btn-step {
             background: #e5e7eb;
             color: #1f2937;
@@ -76,33 +76,37 @@
         }
         .btn-step:active { background: #d1d5db; transform: scale(0.96); }
         
-        /* Panneau d'action et boutons */
-        .action-panel { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; background: #fef3c7; border-color: #fcd34d; }
+        .action-panel { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: #fef3c7; border-color: #fcd34d; }
         .target-group { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-weight: bold; font-size: 1.05rem; }
         .target-group input { width: 110px; font-weight: bold; padding: 8px; text-align: right; }
         .btn-main { background-color: var(--primary); color: white; border: none; padding: 14px 24px; font-size: 1.05rem; font-weight: bold; border-radius: 10px; cursor: pointer; touch-action: manipulation; }
-        .btn-main:active { background-color: var(--primary-hover); }
         .btn-deduct { background-color: #059669; color: white; border: none; padding: 12px 18px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%; touch-action: manipulation; }
         .btn-deduct:disabled { background-color: #9ca3af; cursor: not-allowed; }
         
-        /* Résultats */
         #result-panel { margin-top: 16px; display: none; }
-        .success-box { background-color: #ecfdf5; border: 1px solid #10b981; color: #065f46; padding: 16px; border-radius: 12px; }
-        .error-box { background-color: #fef2f2; border: 1px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 12px; }
+        .success-box, .error-box { padding: 16px; border-radius: 12px; min-width: 0 !important; }
+        .success-box { background-color: #ecfdf5; border: 1px solid #10b981; color: #065f46; }
+        .error-box { background-color: #fef2f2; border: 1px solid #ef4444; color: #991b1b; }
         .result-list { list-style: none; padding: 0; margin: 12px 0; }
         .result-list li { padding: 6px 0; font-size: 1rem; border-bottom: 1px dashed #a7f3d0; }
         .summary-stats { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; font-weight: bold; background: rgba(255,255,255,0.7); padding: 10px; border-radius: 8px; }
 
-        /* Règles spécifiques Smartphones */
+        /* Passage des boutons et quantités SOUS le texte sur mobile */
         @media (max-width: 768px) {
-            body { padding: 10px; }
             .grid-container { grid-template-columns: 1fr; }
-            .recipe-bottom { flex-direction: column; align-items: stretch; }
+            .item-row, .recipe-top, .recipe-bottom {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .qty-control {
+                justify-content: flex-end;
+                width: 100%;
+            }
             .ing-group { width: 100%; }
             .action-panel { flex-direction: column; align-items: stretch; }
-            .target-group { width: 100%; }
+            .target-group { flex-direction: column; align-items: stretch; }
+            .target-group input { width: 100%; text-align: center; }
             .btn-main { width: 100%; }
-            .success-box { min-width: 100% !important; }
         }
     </style>
 </head>
